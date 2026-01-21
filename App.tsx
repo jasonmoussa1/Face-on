@@ -5,15 +5,12 @@ import {
   Trash2, 
   Upload, 
   Film, 
-  User, 
   Sparkles, 
   Download, 
   AlertCircle, 
   Loader2, 
   X,
-  ShieldCheck,
   RefreshCw,
-  Image as ImageIcon,
   Library,
   Clock,
   MessageSquare,
@@ -22,12 +19,23 @@ import {
   Video,
   Play,
   Ticket,
-  ChevronRight
+  Sun,
+  Moon
 } from 'lucide-react';
 import { FaceImage, GenerationState, GenerationAsset, AspectRatio } from './types';
 import { swapFacesInPoster, animatePoster } from './services/geminiService';
 
+declare global {
+  interface Window {
+    aistudio: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}
+
 export default function App() {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [poster, setPoster] = useState<string | null>(null);
   const [faces, setFaces] = useState<FaceImage[]>([]);
   const [instructions, setInstructions] = useState('');
@@ -53,10 +61,19 @@ export default function App() {
     checkApiKey();
   }, []);
 
+  useEffect(() => {
+    document.body.className = theme === 'light' ? 'light-mode' : 'dark-mode';
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
   const checkApiKey = async () => {
     try {
+      // Use window.aistudio helper to check if key is already selected
       if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
-        const hasKey = await window.aistudio.hasSelectedApiKey();
+        const hasKey: boolean = await window.aistudio.hasSelectedApiKey();
         setNeedsKey(!hasKey);
       }
     } catch (e) {
@@ -67,6 +84,7 @@ export default function App() {
   const handleSelectKey = async () => {
     if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
       await window.aistudio.openSelectKey();
+      // Assume success due to potential race conditions in selection state updates
       setNeedsKey(false);
     }
   };
@@ -191,13 +209,13 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-yellow-400 selection:text-black">
+    <div className={`min-h-screen bg-black text-white selection:bg-yellow-400 selection:text-black transition-colors duration-500`}>
       {/* Sleek Cinematic Header */}
       <header className="bg-black/80 backdrop-blur-xl border-b border-white/10 py-8 px-10 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-8">
-            <div className="bg-white p-4 rounded-3xl -rotate-6 shadow-2xl shadow-white/10 group hover:rotate-0 transition-transform cursor-pointer">
-               <Film className="w-8 h-8 text-black" />
+            <div className={`p-4 rounded-3xl -rotate-6 shadow-2xl group hover:rotate-0 transition-transform cursor-pointer ${theme === 'dark' ? 'bg-white' : 'bg-black'}`}>
+               <Film className={`w-8 h-8 ${theme === 'dark' ? 'text-black' : 'text-white'}`} />
             </div>
             <div>
               <h1 className="text-5xl font-black font-cinematic tracking-tight">
@@ -209,13 +227,25 @@ export default function App() {
               </div>
             </div>
           </div>
-          <div className="hidden lg:flex items-center space-x-6">
-            <div className="flex flex-col items-end border-r border-white/10 pr-6">
-              <span className="text-[10px] font-black font-cinematic text-zinc-600">PRODUCTION BATCH</span>
-              <span className="text-sm font-mono text-zinc-300">#AFX-2025-VEO</span>
-            </div>
-            <div className="bg-zinc-900 px-6 py-2 rounded-full border border-white/5">
-              <span className="text-[10px] font-black font-cinematic text-yellow-400">Status: Optimized</span>
+          
+          <div className="flex items-center space-x-6">
+            {/* Theme Toggle Button */}
+            <button 
+              onClick={toggleTheme}
+              className={`flex items-center space-x-3 px-6 py-3 rounded-full border-2 transition-all font-cinematic font-black text-sm tracking-widest ${theme === 'light' ? 'border-black bg-black text-white hover:bg-zinc-900' : 'border-white bg-white text-black hover:bg-zinc-100'}`}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
+
+            <div className="hidden lg:flex items-center space-x-6">
+              <div className="flex flex-col items-end border-r border-white/10 pr-6">
+                <span className="text-[10px] font-black font-cinematic text-zinc-600">PRODUCTION BATCH</span>
+                <span className="text-sm font-mono text-zinc-300">#AFX-2025-VEO</span>
+              </div>
+              <div className="bg-zinc-900 px-6 py-2 rounded-full border border-white/5">
+                <span className="text-[10px] font-black font-cinematic text-yellow-400">Status: Optimized</span>
+              </div>
             </div>
           </div>
         </div>
@@ -262,8 +292,8 @@ export default function App() {
               ) : (
                 <label className="flex flex-col items-center justify-center h-[350px] rounded-b-[2.5rem] border-4 border-dashed border-zinc-900 bg-black hover:bg-zinc-900/40 hover:border-white/20 transition-all cursor-pointer group/label">
                   <input type="file" accept="image/*" onChange={handlePosterUpload} className="hidden" />
-                  <div className="w-20 h-20 bg-white flex items-center justify-center rounded-full mb-6 group-hover/label:scale-110 shadow-xl transition-all">
-                    <Upload className="w-10 h-10 text-black" />
+                  <div className={`w-20 h-20 flex items-center justify-center rounded-full mb-6 group-hover/label:scale-110 shadow-xl transition-all ${theme === 'dark' ? 'bg-white' : 'bg-black'}`}>
+                    <Upload className={`w-10 h-10 ${theme === 'dark' ? 'text-black' : 'text-white'}`} />
                   </div>
                   <p className="font-cinematic font-black text-xl tracking-widest">Import Script</p>
                   <p className="text-[10px] text-zinc-600 uppercase tracking-widest mt-3">High-res cinematic asset</p>
@@ -317,7 +347,7 @@ export default function App() {
             <button
               onClick={generate}
               disabled={generation.isGenerating || generation.isAnimating || !poster || faces.length === 0}
-              className={`w-full py-8 rounded-full font-cinematic font-black text-3xl shadow-2xl flex items-center justify-center transition-all transform active:scale-95 ${generation.isGenerating ? 'bg-zinc-900 text-zinc-700' : 'bg-white text-black hover:bg-yellow-400 hover:scale-[1.02] shadow-white/5'}`}
+              className={`w-full py-8 rounded-full font-cinematic font-black text-3xl shadow-2xl flex items-center justify-center transition-all transform active:scale-95 ${generation.isGenerating ? 'bg-zinc-900 text-zinc-700' : theme === 'dark' ? 'bg-white text-black hover:bg-yellow-400' : 'bg-black text-white hover:bg-yellow-400'} hover:scale-[1.02] shadow-white/5`}
             >
               {generation.isGenerating ? <><Loader2 className="w-10 h-10 mr-4 animate-spin" /> Producing...</> : <><Sparkles className="w-10 h-10 mr-4" /> Start Production</>}
             </button>
@@ -346,7 +376,7 @@ export default function App() {
           <div className="sticky top-40 space-y-12">
             <div className="flex items-center justify-between border-b border-white/10 pb-8">
               <div className="flex bg-zinc-950 rounded-full border border-white/10 p-1.5 shadow-2xl">
-                <button onClick={() => setPreviewMode('image')} className={`px-10 py-3 rounded-full text-[12px] font-black uppercase font-cinematic transition-all ${previewMode === 'image' ? 'bg-white text-black shadow-lg shadow-white/10' : 'text-zinc-500 hover:text-white'}`}>Static Reel</button>
+                <button onClick={() => setPreviewMode('image')} className={`px-10 py-3 rounded-full text-[12px] font-black uppercase font-cinematic transition-all ${previewMode === 'image' ? (theme === 'dark' ? 'bg-white text-black' : 'bg-black text-white') + ' shadow-lg' : 'text-zinc-500 hover:text-white'}`}>Static Reel</button>
                 <button onClick={() => setPreviewMode('video')} disabled={!generation.videoUrl && !generation.isAnimating} className={`px-10 py-3 rounded-full text-[12px] font-black uppercase font-cinematic transition-all disabled:opacity-10 ${previewMode === 'video' ? 'bg-yellow-400 text-black shadow-lg shadow-yellow-400/10' : 'text-zinc-500 hover:text-white'}`}>VFX Motion</button>
               </div>
 
@@ -357,7 +387,7 @@ export default function App() {
                      a.href = (previewMode === 'video' ? generation.videoUrl : generation.resultUrl)!; 
                      a.download = `FaceOff-Cinematic-${Date.now()}.${previewMode === 'video' ? 'mp4' : 'png'}`; 
                      a.click(); 
-                   }} className="bg-zinc-900 border border-white/10 text-white w-14 h-14 flex items-center justify-center rounded-2xl hover:bg-white hover:text-black transition-all shadow-xl"><Download className="w-6 h-6" /></button>
+                   }} className={`border border-white/10 w-14 h-14 flex items-center justify-center rounded-2xl transition-all shadow-xl ${theme === 'dark' ? 'bg-zinc-900 text-white hover:bg-white hover:text-black' : 'bg-white text-black hover:bg-black hover:text-white'}`}><Download className="w-6 h-6" /></button>
                 )}
                 <button onClick={() => window.location.reload()} className="bg-zinc-950 border border-white/10 text-zinc-500 w-14 h-14 flex items-center justify-center rounded-2xl hover:border-white hover:text-white transition-all"><RefreshCw className="w-6 h-6" /></button>
               </div>
@@ -373,18 +403,18 @@ export default function App() {
               {generation.isGenerating || (generation.isAnimating && previewMode === 'video') ? (
                 <div className="text-center p-12 space-y-12 z-20">
                   <div className="relative">
-                    <Loader2 className={`w-32 h-32 mx-auto animate-spin stroke-[1px] ${generation.isAnimating ? 'text-yellow-400' : 'text-white'}`} />
+                    <Loader2 className={`w-32 h-32 mx-auto animate-spin stroke-[1px] ${generation.isAnimating ? 'text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-black'}`} />
                     <Film className="w-12 h-12 absolute inset-0 m-auto text-zinc-600" />
                   </div>
                   <div>
                     <h3 className="text-6xl font-black font-cinematic italic tracking-tighter mb-6">Processing</h3>
                     <div className="flex flex-col space-y-3 text-[12px] font-black uppercase font-cinematic text-zinc-500 tracking-[0.4em]">
-                       <p className="animate-pulse text-white">Synthesizing Asset Identity</p>
+                       <p className={`animate-pulse ${theme === 'dark' ? 'text-white' : 'text-black'}`}>Synthesizing Asset Identity</p>
                        <p className="opacity-40">Neutralizing Light Curves</p>
                     </div>
                   </div>
                   <div className="h-1 bg-zinc-900/50 w-64 mx-auto rounded-full overflow-hidden">
-                    <div className={`h-full animate-loading-bar origin-left ${generation.isAnimating ? 'bg-yellow-400' : 'bg-white'}`}></div>
+                    <div className={`h-full animate-loading-bar origin-left ${generation.isAnimating ? 'bg-yellow-400' : theme === 'dark' ? 'bg-white' : 'bg-black'}`}></div>
                   </div>
                 </div>
               ) : previewMode === 'video' && generation.videoUrl ? (
@@ -431,7 +461,6 @@ export default function App() {
                     </button>
                   ))
                 )}
-                {/* Visual end spacer */}
                 <div className="flex-shrink-0 w-10"></div>
               </div>
             </section>
