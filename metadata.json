@@ -1,0 +1,7 @@
+{
+  "name": "Face Off - Movie Poster AI Swapper",
+  "description": "Transform yourself into the star of any movie poster. Upload a poster and up to 4 faces to seamlessly blend them into the cinematic action using advanced AI.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
